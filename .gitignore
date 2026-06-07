@@ -1,0 +1,12 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# uv
+.uv/
+
+# OS
+.DS_Store
+Thumbs.db
