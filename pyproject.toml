@@ -1,0 +1,18 @@
+[project]
+name = "titanic-survival-prediction"
+version = "0.1.0"
+description = "This project is to train a ML model to predict who will survive and who will die using the Titanic passenger data"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.136.3",
+    "ipykernel>=7.2.0",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.10.9",
+    "numpy>=2.4.6",
+    "pandas>=3.0.3",
+    "scikit-learn>=1.9.0",
+    "seaborn>=0.13.2",
+    "uvicorn>=0.49.0",
+    "xgboost>=3.2.0",
+]
