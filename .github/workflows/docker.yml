@@ -1,0 +1,76 @@
+name: Deploy HF
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install huggingface_hub with Xet support
+        run: pip install "huggingface_hub[hf_xet]"
+
+      - name: Push to Hugging Face Space
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          mkdir hf-deploy
+          cp main.py hf-deploy/
+          cp model.py hf-deploy/
+          cp requirements.txt hf-deploy/
+          cp Dockerfile hf-deploy/
+          cp README.md hf-deploy/
+          mkdir hf-deploy/models
+          cp models/model.pkl hf-deploy/models/
+          cp models/feature_names.pkl hf-deploy/models/
+          cp models/metrics.pkl hf-deploy/models/
+
+          python - <<'EOF'
+          from huggingface_hub import HfApi
+          api = HfApi()
+          api.upload_folder(
+              folder_path="hf-deploy",
+              repo_id="Stewie-pixel/titanic-survival-prediction",
+              repo_type="space",
+              token="${{ secrets.HF_TOKEN }}",
+              commit_message="deploy: ${{ github.sha }}",
+              ignore_patterns=["README.md"]
+          )
+          print("Upload complete")
+          EOF
+
+      - name: Trigger central deployment
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.CENTRAL_REPO_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/Stewie-pixel/AI-project-collection/dispatches \
+            -d '{
+              "event_type": "deploy-model",
+              "client_payload": {
+                "model_name": "titanic-survival-prediction",
+                "title": "Titanic Survival Prediction",
+                "models": "Random Forest + XGBoost",
+                "domain": "Classification",
+                "accuracy": "~80%",
+                "tags": "Classification,Tabular,Ensemble",
+                "github": "https://github.com/Stewie-pixel/titanic-survival-prediction",
+                "hf_space": "https://huggingface.co/spaces/Stewie-pixel/titanic-survival-prediction",
+                "status": "live"
+              }
+            }'
